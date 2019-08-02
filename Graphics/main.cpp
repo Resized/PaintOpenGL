@@ -20,7 +20,7 @@ typedef struct {
 } POINT_2D;
 
 void drawLine(POINT_2D p1, POINT_2D p2, MY_COLOR color);
-bool colorEquals(MY_COLOR color1, MY_COLOR color2);
+bool isColorEquals(MY_COLOR color1, MY_COLOR color2);
 void replaceColor(POINT_2D node, MY_COLOR color);
 MY_COLOR getColor(POINT_2D node);
 
@@ -51,14 +51,9 @@ void init()
 			pix[i][j][1] = backgroundColor.g; // G
 			pix[i][j][2] = backgroundColor.b; // B
 		}
-
-	for (int i = 0; i < H; i+= pillarHeight)
-	{
-
-	}
 }
 
-bool colorEquals(MY_COLOR color1, MY_COLOR color2)
+bool isColorEquals(MY_COLOR color1, MY_COLOR color2)
 {
 	return color1.r == color2.r && color1.g == color2.g && color1.b == color2.b;
 }
@@ -83,9 +78,9 @@ void floodFill(POINT_2D node, MY_COLOR targetColor, MY_COLOR replacementColor)
 {
 	vector <POINT_2D> stack;
 	POINT_2D point;
-	if (colorEquals(targetColor, replacementColor))
+	if (isColorEquals(targetColor, replacementColor))
 		return;
-	else if (!colorEquals(getColor(node), targetColor))
+	else if (!isColorEquals(getColor(node), targetColor))
 		return;
 	replaceColor(node, replacementColor);
 	stack.push_back(node);
@@ -97,22 +92,22 @@ void floodFill(POINT_2D node, MY_COLOR targetColor, MY_COLOR replacementColor)
 		POINT_2D eastPoint = { point.x - 1,point.y };
 		POINT_2D northPoint = { point.x,point.y + 1 };
 		POINT_2D southPoint = { point.x,point.y - 1 };
-		if (colorEquals(getColor(westPoint), targetColor))
+		if (isColorEquals(getColor(westPoint), targetColor))
 		{
 			replaceColor(westPoint, replacementColor);
 			stack.push_back(westPoint);
 		}
-		if (colorEquals(getColor(eastPoint), targetColor))
+		if (isColorEquals(getColor(eastPoint), targetColor))
 		{
 			replaceColor(eastPoint, replacementColor);
 			stack.push_back(eastPoint);
 		}
-		if (colorEquals(getColor(northPoint), targetColor))
+		if (isColorEquals(getColor(northPoint), targetColor))
 		{
 			replaceColor(northPoint, replacementColor);
 			stack.push_back(northPoint);
 		}
-		if (colorEquals(getColor(southPoint), targetColor))
+		if (isColorEquals(getColor(southPoint), targetColor))
 		{
 			replaceColor(southPoint, replacementColor);
 			stack.push_back(southPoint);
@@ -170,7 +165,6 @@ void drawLine(POINT_2D p1, POINT_2D p2, MY_COLOR color) {
 			pix[(int)p1.x][i][2] = color.b;
 		}
 	}
-
 }
 
 
@@ -212,41 +206,13 @@ void mouse(int button, int state, int x, int y)
 
 }
 
-
-
-//{
-//	if (node.x >= W || node.y >= H || node.x < 0 || node.y < 0)
-//		return;
-//	node.color = { pix[node.y][node.x][0], pix[node.x][node.y][1], pix[node.y][node.x][2] };
-//	if (targetColor.r == replacementColor.r && targetColor.g == replacementColor.g && targetColor.b == replacementColor.b)
-//		return;
-//	else if (node.color.r != targetColor.r || node.color.g != targetColor.g || node.color.b != targetColor.b)
-//		return;
-//	else
-//	{
-//		pix[node.y][node.x][0] = replacementColor.r;
-//		pix[node.y][node.x][1] = replacementColor.g;
-//		pix[node.y][node.x][2] = replacementColor.b;
-//		node.color = replacementColor;
-//		POINT_2D node_west = { node.x - 1, node.y };
-//		POINT_2D node_north = { node.x, node.y + 1 };
-//		POINT_2D node_east = { node.x + 1, node.y };
-//		POINT_2D node_south = { node.x, node.y - 1 };
-//		floodFill(node_west, targetColor, replacementColor);
-//		floodFill(node_north, targetColor, replacementColor);
-//		floodFill(node_east, targetColor, replacementColor);
-//		floodFill(node_south, targetColor, replacementColor);
-//	}
-//	return;
-//}
-
 int main(int argc, char* argv[])
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(W, H);
 	glutInitWindowPosition(200, 100);
-	glutCreateWindow("Paint-Afeka");
+	glutCreateWindow("Paint");
 
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
