@@ -27,16 +27,20 @@ void createColorPillars();
 
 unsigned char pix[H][W][3]; // red,green and blue layers
 double offset = 0;
-POINT_2D firstClick;
+POINT_2D lastPoint;
 
 bool isClicked = false;
 MY_COLOR backgroundColor = { 255,255,255 };
 MY_COLOR lineColor = { 0,0,0 };
-MY_COLOR tColor = { 255,255,255 };
+MY_COLOR targetColor = { 255,255,255 };
 MY_COLOR rColor = { 255,0,0 };
 MY_COLOR fillColor = { 255,0,0 };
 int pillarWidth = 50;
 int pillarHeight = 30;
+int parentWindow;
+int leftButtonState = 0;
+int rightButtonState = 0;
+
 
 void init()
 {
@@ -77,9 +81,9 @@ void createColorPillars()
 	{
 		for (int j = pillarWidth; j < 2 * pillarWidth; j++)
 		{
-			pix[i][j][1] = i * 255 / H; // R
-			pix[i][j][2] = 255 - i * 255 / H; // G
 			pix[i][j][0] = j * 255 / pillarWidth; // B
+			pix[i][j][1] = i * 255 / H; // R
+			pix[i][j][2] = 255 / H; // G
 		}
 	}
 
@@ -87,18 +91,18 @@ void createColorPillars()
 	{
 		for (int j = 2 * pillarWidth; j < 3 * pillarWidth; j++)
 		{
-			pix[i][j][2] = i * 255 / H; // R
 			pix[i][j][0] = 255 - i * 255 / H; // G
 			pix[i][j][1] = j * 255 / pillarWidth; // B
+			pix[i][j][2] = i * 255 / H; // R
 		}
 	}
 }
 
 MY_COLOR getColor(POINT_2D node)
 {
-	int r = pix[node.y][node.x][0];
-	int g = pix[node.y][node.x][1];
-	int b = pix[node.y][node.x][2];
+	unsigned char r = pix[node.y][node.x][0];
+	unsigned char g = pix[node.y][node.x][1];
+	unsigned char b = pix[node.y][node.x][2];
 	MY_COLOR color = { r,g,b };
 	return color;
 }
@@ -116,8 +120,8 @@ void floodFill(POINT_2D node, MY_COLOR targetColor, MY_COLOR replacementColor)
 	POINT_2D point;
 	if (isColorEquals(targetColor, replacementColor))
 		return;
-	else if (!isColorEquals(getColor(node), targetColor))
-		return;
+	/*else if (!isColorEquals(getColor(node), targetColor))
+		return;*/
 	replaceColor(node, replacementColor);
 	stack.push_back(node);
 	while (!stack.empty())
@@ -196,9 +200,9 @@ void drawLine(POINT_2D p1, POINT_2D p2, MY_COLOR color) {
 		stop = p1.y > p2.y ? p1.y : p2.y;
 		for (i = start; i < stop; i++)
 		{
-			pix[(int)p1.x][i][0] = color.r;
-			pix[(int)p1.x][i][1] = color.g;
-			pix[(int)p1.x][i][2] = color.b;
+			pix[i][(int)p1.x][0] = color.r;
+			pix[i][(int)p1.x][1] = color.g;
+			pix[i][(int)p1.x][2] = color.b;
 		}
 	}
 }
@@ -218,26 +222,34 @@ void idle()
 	glutPostRedisplay(); // go to display
 }
 
+void move(int x, int y)
+{
+	POINT_2D pointMoved = { x, H - y };
+	lastPoint = pointMoved;
+}
+
+void drag(int x, int y)
+{
+	POINT_2D pointDragged = { x, H - y };
+	if (x >= pillarWidth * 3 && leftButtonState)
+	{
+		drawLine(lastPoint, pointDragged, lineColor);
+		lastPoint = pointDragged;
+	}
+}
+
 void mouse(int button, int state, int x, int y)
 {
 	POINT_2D pointClicked = { x, H - y };
+	leftButtonState = 0;
+	rightButtonState = 0;
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		if (x < pillarWidth * 3)
 		{
 			lineColor = getColor(pointClicked);
-			return;
 		}
-		else if (!isClicked)
-		{
-			firstClick = pointClicked;
-		}
-		else
-		{
-			POINT_2D secondClick = pointClicked;
-			drawLine(firstClick, secondClick, lineColor);
-		}
-		isClicked = !isClicked;
+		leftButtonState = 1;
 	}
 	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
@@ -247,10 +259,11 @@ void mouse(int button, int state, int x, int y)
 		}
 		else
 		{
-			floodFill(pointClicked, tColor, fillColor);
+			targetColor = getColor(pointClicked);
+			floodFill(pointClicked, targetColor, fillColor);
 		}
+		rightButtonState = 1;
 	}
-
 }
 
 int main(int argc, char* argv[])
@@ -264,6 +277,8 @@ int main(int argc, char* argv[])
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
 	glutMouseFunc(mouse);
+	glutMotionFunc(drag);
+	glutPassiveMotionFunc(move);
 
 	init();
 
