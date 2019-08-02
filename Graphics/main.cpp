@@ -23,6 +23,7 @@ void drawLine(POINT_2D p1, POINT_2D p2, MY_COLOR color);
 bool isColorEquals(MY_COLOR color1, MY_COLOR color2);
 void replaceColor(POINT_2D node, MY_COLOR color);
 MY_COLOR getColor(POINT_2D node);
+void createColorPillars();
 
 unsigned char pix[H][W][3]; // red,green and blue layers
 double offset = 0;
@@ -33,8 +34,8 @@ MY_COLOR backgroundColor = { 255,255,255 };
 MY_COLOR lineColor = { 0,0,0 };
 MY_COLOR tColor = { 255,255,255 };
 MY_COLOR rColor = { 255,0,0 };
-MY_COLOR selectedColor = { 255,0,0 };
-int pillarWidth = 10;
+MY_COLOR fillColor = { 255,0,0 };
+int pillarWidth = 50;
 int pillarHeight = 30;
 
 void init()
@@ -51,11 +52,46 @@ void init()
 			pix[i][j][1] = backgroundColor.g; // G
 			pix[i][j][2] = backgroundColor.b; // B
 		}
+
+	createColorPillars();
 }
 
 bool isColorEquals(MY_COLOR color1, MY_COLOR color2)
 {
 	return color1.r == color2.r && color1.g == color2.g && color1.b == color2.b;
+}
+
+void createColorPillars()
+{
+	for (int i = 0; i < H; i++)
+	{
+		for (int j = 0; j < pillarWidth; j++)
+		{
+			pix[i][j][0] = i * 255 / H; // R
+			pix[i][j][1] = 255 - i * 255 / H; // G
+			pix[i][j][2] = j * 255 / pillarWidth; // B
+		}
+	}
+
+	for (int i = 0; i < H; i++)
+	{
+		for (int j = pillarWidth; j < 2 * pillarWidth; j++)
+		{
+			pix[i][j][1] = i * 255 / H; // R
+			pix[i][j][2] = 255 - i * 255 / H; // G
+			pix[i][j][0] = j * 255 / pillarWidth; // B
+		}
+	}
+
+	for (int i = 0; i < H; i++)
+	{
+		for (int j = 2 * pillarWidth; j < 3 * pillarWidth; j++)
+		{
+			pix[i][j][2] = i * 255 / H; // R
+			pix[i][j][0] = 255 - i * 255 / H; // G
+			pix[i][j][1] = j * 255 / pillarWidth; // B
+		}
+	}
 }
 
 MY_COLOR getColor(POINT_2D node)
@@ -184,24 +220,35 @@ void idle()
 
 void mouse(int button, int state, int x, int y)
 {
-
+	POINT_2D pointClicked = { x, H - y };
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		if (!isClicked)
+		if (x < pillarWidth * 3)
 		{
-			firstClick = { x, H - y };
+			lineColor = getColor(pointClicked);
+			return;
+		}
+		else if (!isClicked)
+		{
+			firstClick = pointClicked;
 		}
 		else
 		{
-			POINT_2D secondClick = { x, H - y };
+			POINT_2D secondClick = pointClicked;
 			drawLine(firstClick, secondClick, lineColor);
 		}
 		isClicked = !isClicked;
 	}
 	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
-		POINT_2D point = { x, H - y };
-		floodFill(point, tColor, rColor);
+		if (x < pillarWidth * 3)
+		{
+			fillColor = getColor(pointClicked);
+		}
+		else
+		{
+			floodFill(pointClicked, tColor, fillColor);
+		}
 	}
 
 }
